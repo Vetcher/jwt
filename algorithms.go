@@ -59,14 +59,14 @@ func (a *Algorithm) Encode(payload *Claims) (string, error) {
 
 	jsonTokenHeader, err := json.Marshal(header)
 	if err != nil {
-		return "", errors.Wrap(err, "unable to marshal header")
+		return "", errors.Wrap(err, "Unable to marshal header")
 	}
 
 	b64TokenHeader := base64.RawURLEncoding.EncodeToString(jsonTokenHeader)
 
 	jsonTokenPayload, err := json.Marshal(payload.claimsMap)
 	if err != nil {
-		return "", errors.Wrap(err, "unable to marshal payload")
+		return "", errors.Wrap(err, "Unable to marshal payload")
 	}
 
 	b64TokenPayload := base64.RawURLEncoding.EncodeToString(jsonTokenPayload)
@@ -75,7 +75,7 @@ func (a *Algorithm) Encode(payload *Claims) (string, error) {
 
 	signature, err := a.Sign(unsignedSignature)
 	if err != nil {
-		return "", errors.Wrap(err, "unable to sign token")
+		return "", errors.Wrap(err, "Unable to sign token")
 	}
 	b64Signature := base64.RawURLEncoding.EncodeToString([]byte(signature))
 
@@ -93,11 +93,11 @@ func (a *Algorithm) Decode(encoded string) (*Claims, error) {
 	var claims map[string]interface{}
 	payload, err := base64.RawURLEncoding.DecodeString(b64Payload)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to decode base64 payload")
+		return nil, errors.Wrap(err, "Unable to decode base64 payload")
 	}
 
 	if err := json.Unmarshal(payload, &claims); err != nil {
-		return nil, errors.Wrap(err, "unable to unmarshal payload json")
+		return nil, errors.Wrap(err, "Unable to unmarshal payload json")
 	}
 
 	return &Claims{
@@ -113,15 +113,18 @@ func (a *Algorithm) Validate(encoded string) error {
 	}
 
 	if err := a.validateSignature(encoded); err != nil {
-		return errors.Wrap(err, "failed to validate signature")
+		return errors.Wrap(err, "Failed to validate signature")
 	}
 
 	if err := a.validateExp(claims); err != nil {
-		return errors.Wrap(err, "failed to validate exp")
+		return errors.Wrap(err, "Failed to validate exp")
 	}
 
 	if err := a.validateNbf(claims); err != nil {
-		return errors.Wrap(err, "failed to validate nbf")
+		return errors.Wrap(err, "Failed to validate nbf")
+	}
+	if GlobalStorage.IsBanned(encoded) {
+		return errors.New("This token is banned")
 	}
 
 	return nil
@@ -137,13 +140,13 @@ func (a *Algorithm) validateSignature(encoded string) error {
 	unsignedAttempt := b64Header + "." + b64Payload
 	signedAttempt, err := a.Sign(unsignedAttempt)
 	if err != nil {
-		return errors.Wrap(err, "unable to sign token for validation")
+		return errors.Wrap(err, "Unable to sign token for validation")
 	}
 
 	b64SignedAttempt := base64.RawURLEncoding.EncodeToString([]byte(signedAttempt))
 
 	if strings.Compare(b64Signature, b64SignedAttempt) != 0 {
-		return errors.New("invalid signature")
+		return errors.New("Invalid signature")
 	}
 
 	return nil
@@ -158,7 +161,7 @@ func (a *Algorithm) validateExp(claims *Claims) error {
 		}
 
 		if exp.Before(time.Now()) {
-			return errors.New("token has expired")
+			return errors.New("Token has expired")
 		}
 	}
 
@@ -173,7 +176,7 @@ func (a *Algorithm) validateNbf(claims *Claims) error {
 		}
 
 		if nbf.After(time.Now()) {
-			return errors.New("token isn't valid yet")
+			return errors.New("Token isn't valid yet")
 		}
 	}
 

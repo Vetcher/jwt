@@ -23,6 +23,7 @@ func RunTest(t *testing.T, command func(Algorithm)) {
 
 func TestEncodeAndValidateToken(t *testing.T) {
 	RunTest(t, func(algorithm Algorithm) {
+		GlobalStorage = NewStorage(time.Hour)
 		payload := NewClaim()
 		payload.SetTime("nbf", time.Now().Add(time.Duration(-1) * time.Hour))
 		payload.SetTime("exp", time.Now().Add(time.Duration(100) * time.Hour))
@@ -36,11 +37,13 @@ func TestEncodeAndValidateToken(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+		GlobalStorage.Destroy()
 	})
 }
 
 func TestValidateToken(t *testing.T) {
 	RunTest(t, func(algorithm Algorithm) {
+		GlobalStorage = NewStorage(time.Hour)
 		payload := NewClaim()
 		err := json.Unmarshal([]byte(`{"sub":"1234567890","name":"John Doe","admin":true}`), &payload)
 		if err != nil {
@@ -61,11 +64,13 @@ func TestValidateToken(t *testing.T) {
 		if err == nil {
 			t.Fatal(err)
 		}
+		GlobalStorage.Destroy()
 	})
 }
 
 func TestVerifyTokenExp(t *testing.T) {
 	RunTest(t, func(algorithm Algorithm) {
+		GlobalStorage = NewStorage(time.Hour)
 		payload := NewClaim()
 		payload.Set("exp", fmt.Sprintf("%d", time.Now().Add(-1*time.Hour).Unix()))
 
@@ -83,12 +88,13 @@ func TestVerifyTokenExp(t *testing.T) {
 		if err == nil {
 			t.Fatal(err)
 		}
+		GlobalStorage.Destroy()
 	})
 }
 
 func TestVerifyTokenNbf(t *testing.T) {
 	RunTest(t, func(algorithm Algorithm) {
-
+		GlobalStorage = NewStorage(time.Hour)
 		payload := NewClaim()
 		payload.SetTime("nbf", time.Now().Add(time.Duration(1) * time.Hour))
 
@@ -106,5 +112,6 @@ func TestVerifyTokenNbf(t *testing.T) {
 		if err == nil {
 			t.Fatal(err)
 		}
+		GlobalStorage.Destroy()
 	})
 }

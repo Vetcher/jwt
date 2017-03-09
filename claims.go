@@ -27,6 +27,7 @@ func NewClaim() *Claims {
 	}
 
 	claims.SetTime("iat", time.Now())
+	claims.SetTime("nbf", time.Now())
 
 	return claims
 }
